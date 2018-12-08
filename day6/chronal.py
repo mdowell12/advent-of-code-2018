@@ -19,12 +19,11 @@ def largest_area(raw_coordinates):
     """
     coordinates = _parse_coordinates(raw_coordinates)
     min_x, max_x, min_y, max_y = _find_corners(coordinates)
-    
-    grid = [i for i in itertools.product(range(min_x, max_x + 1), range(min_y, max_y + 1))]
-   
+    grid = _make_grid(min_x, max_x, min_y, max_y)
+
     # Maps a point on the grid to the coordinate closest to it
     closest_coords = {p: _find_closest_coord(p, coordinates) for p in grid}
-    
+
     # Aid in debugging
     _print_grid(grid, closest_coords)
 
@@ -46,6 +45,44 @@ def largest_area(raw_coordinates):
 
     return max_area
 
+
+def safe_zone(raw_coordinates, max_total_dist):
+    coordinates = _parse_coordinates(raw_coordinates)
+    min_x, max_x, min_y, max_y = _safe_zone_corners(coordinates, max_total_dist)
+    grid = _make_grid(min_x, max_x, min_y, max_y)
+
+    safe_points = set()
+
+    for point in grid:
+        if _is_under_max_total_dist(point, coordinates, max_total_dist):
+            safe_points.add(point)
+
+    return len(safe_points)
+
+
+def _is_under_max_total_dist(point, coordinates, max_total_dist):
+    acc_dist = 0
+    for coord in coordinates:
+        acc_dist += _manhattan_dist(point, coord)
+        if acc_dist >= max_total_dist:
+            return False
+    return True
+
+def _safe_zone_corners(raw_coordinates, max_total_dist):
+    min_x, max_x, min_y, max_y = _find_corners(raw_coordinates)
+    buffer_length = int(max_total_dist / len(raw_coordinates)) + 1  # Add one to be safe
+
+    return (
+        min_x - buffer_length,
+        max_x + buffer_length,
+        min_y - buffer_length,
+        max_y + buffer_length
+    )
+
+def _make_grid(min_x, max_x, min_y, max_y):
+    return [i for i in itertools.product(range(min_x, max_x + 1), range(min_y, max_y + 1))]
+
+
 def _find_closest_coord(point, coordinates):
     # Maps a distance to a set of coords who are that distance from the point
     distances = {}
@@ -54,7 +91,7 @@ def _find_closest_coord(point, coordinates):
         if distance not in distances:
             distances[distance] = []
         distances[distance].append(coord)
-    
+
     min_dist = min(distances.keys())
     min_coords = distances[min_dist]
     # Return (-1, -1) if there is a tie
@@ -98,3 +135,5 @@ if __name__ == "__main__":
     largest_area = largest_area(coordinates)
     print "Largest area:", largest_area
 
+    safe_zone_size = safe_zone(coordinates, 10000)
+    print "Safe zone size:", safe_zone_size
