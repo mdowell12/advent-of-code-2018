@@ -28,6 +28,13 @@ def find_order(steps):
     return order
 
 
+def _find_first_available_step(remaining_tasks, step_dependencies):
+                for task in remaining_tasks:
+                    if not step_dependencies[task]:
+                        return task
+                return None
+
+
 def task_duration(step_rules, base_step_duration, num_workers):
     # We will treat the workers list as a stack to provide workers
     # when they are available
@@ -37,38 +44,40 @@ def task_duration(step_rules, base_step_duration, num_workers):
     active_steps = {}  # Map step being worked on to remaining minutes of work
 
     step_dependencies = _group_dependencies(step_rules)
-    
+    remaining_tasks = set(step_dependencies.keys())
+
     while step_dependencies:
-        
         # Schedule some work
-        while True:
-            next_step = _find_next_step(step_dependencies)
-        
+        while remaining_tasks:
+
+            next_step = _find_first_available_step(remaining_tasks, step_dependencies)
+            
             if not next_step or not workers:
                 break
             
             # Take a worker and activate the step
             workers.pop()
+            remaining_tasks.remove(next_step)
             active_steps[next_step] = _step_duration(next_step, base_step_duration)
-        
-        completed_steps = [s for s, v in active_steps.iteritems() if v == 0]
-        for step in completed_steps:
-            step_dependencies = _complete_step(step, step_dependencies)
-            del active_steps[step]
-            # Worker is freed up, add back to stack
-            workers.append(1)
 
-
-        # Log it out bitch
-        print "Second: " + str(elapsed) + " " + " ".join(s for s in active_steps)
 
         for step in active_steps:
             active_steps[step] -= 1
-
+       
         completed_steps = [s for s, v in active_steps.iteritems() if v == 0]
 
-        elapsed += 1
+        for step in completed_steps:
+            step_dependencies = _complete_step(step, step_dependencies)
+            # Worker is freed up, add back to stack
+            workers.append(1)
+            # Step is no longer active
+            del active_steps[step]
+        
+        # Log it out bitch
+        print "Second: " + str(elapsed) + " " + " ".join(s + ":" + str(v) for s, v in active_steps.iteritems()) + " Workers: " + str(len(workers))
 
+      
+        elapsed += 1
 
     return elapsed
 
@@ -90,16 +99,18 @@ def _complete_step(step, step_dependencies):
     return step_dependencies
 
 
-def _find_next_step(step_dependencies):
+def _find_next_step(step_dependencies, ignore=None):
     steps_without_prereq = _find_steps_without_prereq(step_dependencies)
-    return _break_step_tie(steps_without_prereq)
+    return _break_step_tie(steps_without_prereq, ignore=ignore)
 
 
 def _find_steps_without_prereq(step_dependencies):
     return [step for step, prereq in step_dependencies.iteritems() if not prereq]
 
 
-def _break_step_tie(steps):
+def _break_step_tie(steps, ignore=None):
+    if ignore is not None:
+        steps = [s for s in steps if s not in ignore]
     return sorted(steps)[0]
 
 
@@ -132,4 +143,6 @@ if __name__ == "__main__":
     steps = read_input_file(f)
 
     print "Order:", find_order(steps)
+    duration = task_duration(steps, 60, 5)
+    print "Elapsed time:", duration
 
