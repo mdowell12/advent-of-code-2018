@@ -1,3 +1,4 @@
+from license import find_value
 from license import sum_metadata
 
 
@@ -7,6 +8,15 @@ expected = 138
 actual = sum_metadata(test_input)
 
 print "Part 1"
+print "Expected:", expected
+print "Actual:", actual
+print "PASSED" if expected == actual else "FAILED"
+print
+
+expected = 66
+actual = find_value(test_input)
+
+print "Part 2"
 print "Expected:", expected
 print "Actual:", actual
 print "PASSED" if expected == actual else "FAILED"
