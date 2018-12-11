@@ -1,6 +1,10 @@
 import time
 
 
+POINT_PRESENT_CHAR = "#"
+POINT_ABSENT_CHAR =  " "
+
+
 def read_input_file(f):
     with open(f, 'r') as ff:
         return [i.strip() for i in ff.read().strip().split("\n")]
@@ -10,25 +14,30 @@ def find_message(raw_points):
     points = _parse_points(raw_points)
     # import pdb; pdb.set_trace()
     # Point.EXISTING_POINTS = set(points)
-
+    Point.set_corners(points)
     # Slowly loop and print the board until human stops us
     while True:
-        _print_grid(points)
+        coords = tuple((p.current_x, p.current_y) for p in points)
+        _print_grid(coords)
         for point in points:
             point.move()
-        time.sleep(1)
+        Point.set_corners(points)
+        time.sleep(0.5)
 
 
-def _print_grid(points):
+def _print_grid(coords):
     xs = range(Point.MIN_X - 1, Point.MAX_X + 1)
     ys = range(Point.MIN_Y - 1, Point.MAX_Y + 1)
 
     for y in ys:
-        line = ["#" if Point.exists(x, y, points) else "." for x in xs]
-        print "".join(line)
+        # import/ pdb; pdb.set_trace()
+        # line = [POINT_PRESENT_CHAR if Point.exists(x, y, points) else POINT_ABSENT_CHAR for x in xs]
+        line = [POINT_PRESENT_CHAR if (x, y) in coords else POINT_ABSENT_CHAR for x in xs]
+        # print "".join(line)
+    print "grid corners (%s %s %s %s)" % (Point.MIN_X, Point.MAX_X, Point.MIN_Y, Point.MAX_Y)
+    print
+    print
 
-    print
-    print
 
 
 def _parse_points(raw_points):
@@ -55,14 +64,11 @@ class Point(object):
     MIN_Y = None
     MAX_Y = None
 
-    EXISTING_POINTS = set()
-
     def __init__(self, start_x, start_y, dx, dy):
         self.current_x = start_x
         self.current_y = start_y
         self.dx = dx
         self.dy = dy
-        self._set_min_max_class_vals()
 
     @staticmethod
     def exists(x, y, points):
@@ -77,11 +83,12 @@ class Point(object):
         self.current_y += self.dy
         # self._set_min_max_class_vals()
 
-    def _set_min_max_class_vals(self):
-        Point.MIN_X = min(self.current_x, Point.MIN_X) if Point.MIN_X is not None else self.current_x
-        Point.MAX_X = max(self.current_x, Point.MAX_X) if Point.MAX_X is not None else self.current_x
-        Point.MIN_Y = min(self.current_y, Point.MIN_Y) if Point.MIN_Y is not None else self.current_y
-        Point.MAX_Y = max(self.current_y, Point.MAX_Y) if Point.MAX_Y is not None else self.current_y
+    @staticmethod
+    def set_corners(points):
+        Point.MIN_X = min(p.current_x for p in points)
+        Point.MAX_X = max(p.current_x for p in points)
+        Point.MIN_Y = min(p.current_y for p in points)
+        Point.MAX_Y = max(p.current_y for p in points)
 
     def __repr__(self):
         return "Point[X: %s, Y: %s, dx: %s, dy: %s]" % (
