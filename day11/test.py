@@ -25,7 +25,7 @@ test_max_grid_inputs = [
 print "Testing max grid calculations."
 for case in test_max_grid_inputs:
     expected = case[1]
-    actual = find_max_grid(case[0])
+    actual, _ = find_max_grid(case[0], 3)
 
     print "Case:", case
     print "Expected:", expected

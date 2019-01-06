@@ -16,25 +16,34 @@ def find_max_grid_any_sub_grid_size(serial_number):
 
     return best[1], best[0]
 
+
 def find_max_grid(serial_number, sub_grid_size):
-    coord_to_power_level = {coord: cell_power_level(coord, serial_number) \
-        for coord in _coord_generator()}
+    coord_to_power_level = {coord: cell_power_level(coord, serial_number)
+                            for coord in _coord_generator()}
 
     # _print_power_levels(coord_to_power_level)
 
-    # Coord to total sub grid power
-    highest_so_far = (None, None)
+    best_coord_so_far = (None, None)
+    best_power_so_far = None
 
-    coords_to_try = [c for c in _coord_generator() \
-        if c[0] <= SQUARE_WIDTH - (sub_grid_size - 1) \
-        and c[1] <= SQUARE_WIDTH - (sub_grid_size - 1)]
+    coords_to_try = [c for c in _coord_generator()
+                     if c[0] <= SQUARE_WIDTH - (sub_grid_size - 1)
+                     and c[1] <= SQUARE_WIDTH - (sub_grid_size - 1)]
 
     for top_left in coords_to_try:
-        sub_grid_power = _total_subgrid_power(top_left, coord_to_power_level, sub_grid_size)
-        if highest_so_far[0] is None or sub_grid_power > highest_so_far[1]:
-            highest_so_far = (top_left, sub_grid_power)
+        sub_grid_power = _total_subgrid_power(
+            top_left,
+            coord_to_power_level,
+            sub_grid_size
+        )
+        if best_coord_so_far is None or \
+                best_power_so_far is None or \
+                sub_grid_power > best_power_so_far:
 
-    return highest_so_far
+            best_coord_so_far = top_left
+            best_power_so_far = sub_grid_power
+
+    return best_coord_so_far, best_power_so_far
 
 
 def _total_subgrid_power(top_left, coord_to_power_level, sub_grid_size):
@@ -57,6 +66,7 @@ def _print_power_levels(coord_to_power_level):
         xs = [x for x in sorted(set(p[0] for p in coord_to_power_level.keys()))]
         power_levels = [str(coord_to_power_level[(x, y)]) for x in xs]
         print " ".join(" " + i if len(i) == 1 else i for i in power_levels)
+
 
 def cell_power_level(coordinate, serial_number):
     x, y = coordinate
